@@ -1,0 +1,219 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RideVerse</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet (библиотека для карт) и плагины навигации -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
+    
+    
+    <!-- Шрифты -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Основные стили -->
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" integrity="sha512-FDcVY+g7vc5CXANbrTSg1K5qLyriCsGDYCE02Li1tXEYdNQPvLPHNE+rT2Mjei8N7fZbe0WLhw27j2SrGRpdMg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+</head>
+<body class="w-full h-screen flex flex-col">
+
+    <!-- === ЭКРАН 1: ГАРАЖ === -->
+    <div id="garage-screen" class="w-full flex-grow flex flex-col min-h-0">
+        <header class="p-4 flex justify-between items-center glass-panel border-b border-gray-800/50 flex-shrink-0">
+            <div id="wallet-connector" class="flex items-center gap-3">
+                <button id="connect-wallet-btn" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
+                    Подключить кошелек
+                </button>
+            </div>
+        
+            <div class="text-right">
+                <p id="ride-balance" class="text-lg font-bold text-cyan-400">0.00 $RIDE</p>
+        
+                <div class="flex items-center gap-1 justify-end mt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v1.046a1 1 0 01-1.414.954l-1.942-1.942a1 1 0 01.954-1.414zM4.68 4.68a1 1 0 011.414 0l1.942 1.942a1 1 0 01-1.414 1.414L4.68 6.094a1 1 0 010-1.414zM16 10a1 1 0 11-2 0 1 1 0 012 0zM2 12a1 1 0 100-2 1 1 0 000 2zM6.094 15.32a1 1 0 010-1.414l1.942-1.942a1 1 0 111.414 1.414l-1.942 1.942a1 1 0 01-1.414 0zM13.906 15.32a1 1 0 011.414 0l1.942 1.942a1 1 0 01-1.414 1.414l-1.942-1.942a1 1 0 010-1.414zM12 20a1 1 0 100-2 1 1 0 000 2zM8.586 2.586a1 1 0 011.414 0l1.942 1.942a1 1 0 11-1.414 1.414L8.586 4A1 1 0 018.586 2.586zM10 6a4 4 0 100 8 4 4 0 000-8z" clip-rule="evenodd" /></svg>
+                    <p class="text-xs text-gray-400">100 / 100</p>
+                </div>
+            </div>
+            </header>
+            <main class="flex-grow p-4 py-8 flex flex-col items-center overflow-y-auto">
+                <div class="w-full max-w-sm flex items-center justify-center">
+                    <button id="prev-btn" class="p-2 text-gray-500 hover:text-white transition-colors">&lt;</button>
+                    <div id="vehicle-image-container" class="flex-grow aspect-square p-2 nft-image-container">
+                        </div>
+                    <button id="next-btn" class="p-2 text-gray-500 hover:text-white transition-colors">&gt;</button>
+                </div>
+    
+                <div class="w-full max-w-md glass-panel p-4 rounded-xl mt-4">
+                    <h1 id="vehicle-name" class="text-2xl font-bold text-center mb-1"></h1>
+                    <p id="vehicle-rarity" class="text-sm text-cyan-400 text-center mb-2"></p>
+                    <div id="vehicle-earning" class="flex items-center justify-center gap-1.5 mb-4 text-cyan-300">
+                        </div>
+    
+                    <div id="staking-info-section" class="space-y-3 mb-4">
+                        </div>
+    
+                    <h2 class="text-lg font-semibold mb-4 text-center">Характеристики</h2>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <span class="font-medium text-sm text-gray-300">Эффективность</span>
+                            <div class="col-span-2 w-full progress-bar-bg rounded-full h-2.5">
+                                <div id="efficiency-bar" class="progress-bar-fill h-2.5 rounded-full"></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <span class="font-medium text-sm text-gray-300">Прочность</span>
+                            <div class="col-span-2 w-full progress-bar-bg rounded-full h-2.5">
+                                <div id="durability-bar" class="progress-bar-fill h-2.5 rounded-full"></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <span class="font-medium text-sm text-gray-300">Удача</span>
+                            <div class="col-span-2 w-full progress-bar-bg rounded-full h-2.5">
+                                <div id="luck-bar" class="progress-bar-fill h-2.5 rounded-full"></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <span class="font-medium text-sm text-gray-300">Комфорт</span>
+                            <div class="col-span-2 w-full progress-bar-bg rounded-full h-2.5">
+                                <div id="comfort-bar" class="progress-bar-fill h-2.5 rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div id="garage-actions" class="w-full max-w-md mt-6 space-y-3">
+                    </div>
+            </main>
+    </div>
+
+    <!-- === ЭКРАН 2: КАРТА (Изначально скрыт) === -->
+    <div id="map-screen" class="w-full flex-grow hidden relative min-h-0">
+        
+        <div id="map" class="w-full h-full"></div>
+
+        <!-- НОВЫЙ БЛОК ДЛЯ ИКОНКИ В УГЛУ -->
+        <!-- ИСПРАВЛЕНИЕ: Добавлен style="z-index: 1001;" -->
+        <div id="current-vehicle-display" 
+             class="absolute top-4 right-4 w-20 h-20 p-2 glass-panel rounded-lg hidden bg-gray-900/50" 
+             style="z-index: 1001;">
+            <!-- Иконка будет вставлена сюда -->
+        </div>
+
+        <div class="map-ui-overlay">
+            <div class="max-w-md mx-auto"> <div class="glass-panel p-4 rounded-xl mb-4">
+                    <div class="flex justify-around text-center">
+                        <div><p class="text-xs text-gray-400">СКОРОСТЬ</p><p class="text-2xl font-bold"><span id="map-speed">0</span> <span class="text-base font-normal">км/ч</span></p></div>
+                        <div><p class="text-xs text-gray-400">ДИСТАНЦИЯ</p><p class="text-2xl font-bold"><span id="map-distance">0.0</span> <span class="text-base font-normal">км</span></p></div>
+                        <div><p class="text-xs text-gray-400">ЗАРАБОТАНО</p><p class="text-2xl font-bold text-cyan-400"><span id="map-earnings">0.00</span></p></div>
+                    </div>
+                </div>
+
+                <button id="end-ride-btn" class="w-full py-3 bg-red-600 text-white font-bold text-lg rounded-xl transition-transform duration-200 active:scale-95 btn-glow shadow-lg">Завершить</button>
+            
+            </div>
+        </div>
+    
+    </div>
+
+    <!-- НОВЫЙ ЭКРАН 3: КАРТА (Изначально скрыт) -->
+    <div id="store-screen" class="w-full flex-grow hidden flex-col min-h-0">
+        <header class="p-4 flex justify-between items-center glass-panel border-b border-gray-800/50 flex-shrink-0">
+            <h1 class="text-xl font-bold text-white">Магазин Велосипедов</h1>
+            <div id="store-ride-balance" class="text-right">
+                </div>
+        </header>
+        <main class="flex-grow p-4 overflow-y-auto">
+            <p class="text-center text-gray-400 mb-4">Выберите велосипед для покупки</p>
+            <div id="store-items-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                </div>
+        </main>
+    </div>
+
+    <!-- === НОВЫЙ ЭКРАН 4: СТАТИСТИКА (Изначально скрыт) === -->
+    <div id="stats-screen" class="w-full flex-grow hidden flex-col min-h-0">
+        <header class="p-4 flex justify-between items-center glass-panel border-b border-gray-800/50 flex-shrink-0">
+            <h1 class="text-xl font-bold text-white">Ваша Статистика</h1>
+        </header>
+        <main class="flex-grow p-4 overflow-y-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <!-- Карточка: Общая дистанция -->
+                <div class="glass-panel p-5 rounded-xl">
+                    <p class="text-sm font-medium text-gray-400">Общая дистанция</p>
+                    <p class="text-3xl font-bold text-cyan-400 mt-1">
+                        <span id="stats-total-distance">0.00</span> км
+                    </p>
+                </div>
+
+                <!-- Карточка: Всего поездок -->
+                <div class="glass-panel p-5 rounded-xl">
+                    <p class="text-sm font-medium text-gray-400">Всего поездок</p>
+                    <p id="stats-total-rides" class="text-3xl font-bold text-white mt-1">0</p>
+                </div>
+
+                <!-- Карточка: Всего заработано -->
+                <div class="glass-panel p-5 rounded-xl">
+                    <p class="text-sm font-medium text-gray-400">Всего заработано</p>
+                    <p class="text-3xl font-bold text-cyan-400 mt-1">
+                        <span id="stats-total-earned">0.00</span> $RIDE
+                    </p>
+                </div>
+
+                <!-- Карточка: Самая длинная поездка -->
+                <div class="glass-panel p-5 rounded-xl">
+                    <p class="text-sm font-medium text-gray-400">Самая длинная поездка</p>
+                    <p class="text-3xl font-bold text-white mt-1">
+                        <span id="stats-longest-ride">0.00</span> км
+                    </p>
+                </div>
+
+            </div>
+            <!-- Здесь в будущем можно добавить графики -->
+        </main>
+    </div>
+
+    
+    
+    <!-- === МОДАЛЬНОЕ ОКНО ДЛЯ ВВОДА АДРЕСА === -->
+    <div id="destination-modal" class="hidden absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4">
+        <div class="w-full max-w-md glass-panel p-6 rounded-xl text-center">
+            <h2 class="text-xl font-bold mb-4">Куда едем?</h2>
+            <div class="relative">
+                <input id="destination-input" type="text" placeholder="Введите адрес или название места..." class="w-full p-3 bg-gray-900/50 border border-gray-700 rounded-lg mb-1 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500">
+                <div id="autocomplete-results" class="absolute left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg text-left max-h-48 overflow-y-auto z-10"></div>
+            </div>
+            <div id="modal-loader" class="hidden my-4"><p class="text-cyan-400 animate-pulse">Ищем координаты...</p></div>
+            <div class="flex gap-4 mt-4">
+                <button id="modal-go-btn" class="flex-1 py-3 bg-cyan-500 text-white font-bold rounded-lg btn-glow disabled:bg-gray-500 disabled:shadow-none" disabled>Поехали!</button>
+                <button id="modal-ride-freely-btn" class="flex-1 py-3 bg-gray-700 text-gray-300 font-bold rounded-lg">Ехать без цели</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Общий футер с навигацией -->
+    <footer class="w-full glass-panel p-2 flex justify-around border-t border-gray-800/50 flex-shrink-0 z-[10000]">
+        <a href="#" id="nav-garage" class="nav-item-active text-center w-full p-2 border-t-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg><span class="text-xs font-medium">Гараж</span></a>
+        <a href="#" id="nav-store" class="text-gray-400 text-center w-full p-2 border-t-2 border-transparent hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg><span class="text-xs font-medium">Магазин</span></a>
+        <a href="#" id="nav-stats" class="text-gray-400 text-center w-full p-2 border-t-2 border-transparent hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg><span class="text-xs font-medium">Статистика</span></a>
+        <a href="#" id="nav-map" class="text-gray-400 text-center w-full p-2 border-t-2 border-transparent hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m-6 3l6-3m0 0l6-3m-6 3V7" /></svg><span class="text-xs font-medium">Карта</span></a>
+    </footer>
+
+    <!-- НОВАЯ СТРУКТУРА ПОДКЛЮЧЕНИЯ СКРИПТОВ -->
+    <script src="https://unpkg.com/@web3modal/standalone@3.0.1/dist/index.js"></script> 
+    <script src="js/data.js" type="module"></script>
+    <script src="js/ui.js" type="module"></script>
+    <script src="js/map.js" type="module"></script>
+    <script src="js/app.js" type="module"></script>
+    
+    
+</body>
+</html>
